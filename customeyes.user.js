@@ -1,15 +1,22 @@
 // ==UserScript==
-// @name         Customeyes
+// @name         Customeyes Bookmarks
 // @namespace    https://the-eye.eu/
-// @version      0.1
+// @version      0.2
 // @description  File browsing UI enhancements
-// @author       oduska
+// @author       You
 // @match        https://the-eye.eu/*
 // @grant        none
 // ==/UserScript==
 
-// Styles
-var css = '.customeyes-files .single-item:not(:first-child){text-align:right;position:relative;min-height:24px}.customeyes-files .single-item:not(:first-child) a{text-align:left;position:absolute;left:0;min-height:24px;padding-top:3px}.customeyes-files{white-space:unset}.customeyes-files .size{width:5em;display:inline-block;padding-top:3px}.customeyes-toolbar{color:#cfcfcf;background-color:#2f3136;padding:1em;border-radius:.28571429rem;box-shadow:0 0 0 1px rgba(34,36,38,.22) inset,0 0 0 0 transparent}.customeyes-toolbar .option-group{display:inline-block;margin:0 2em 0 0;-webkit-touch-callout:none;-webkit-user-select:none;-khtml-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none}.customeyes-toolbar input[type=checkbox]{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);border:0}.customeyes-toolbar input[type=checkbox]:checked+label::after{display:block}.customeyes-toolbar label{cursor:pointer;position:relative}.customeyes-toolbar label::before{content:"";display:inline-block;width:16px;height:16px;vertical-align:middle;margin-right:.4em;position:relative;top:-1px;border:2px solid #616f80}.customeyes-toolbar label::after{display:none;content:"x";font-weight:700;position:absolute;left:0;top:0;width:15px;height:16px;font-size:16px;line-height:.9;background-size:contain;background-repeat:no-repeat;text-align:center}.customeyes-files.icons-enabled .single-item:not(:first-child) a{padding-left:32px}.customeyes-files.icons-enabled .customeyes-icon{display:block}.customeyes-icon{display:none;text-align:center;width:100%;max-width:24px;position:absolute;left:0;top:0;z-index:20;filter:grayscale(1);-webkit-filter:grayscale(1)}.colored-icons .customeyes-icon{filter:grayscale(0);-webkit-filter:grayscale(0)}.customeyes-files .name{width:auto;max-width:calc(100% - 15em);white-space:nowrap;text-overflow:ellipsis;overflow:hidden;z-index:1;display:block}.customeyes-files .name:focus,.customeyes-files .name:hover{overflow-x:visible;background:#2f3136;z-index:10;max-width:none;padding-right:.75em}.customeyes-files.focus-highlight .focus,.customeyes-files.focus-highlight .name:focus,.customeyes-files.focus-highlight .name:hover,.customeyes-files.focus-highlight .single-item:focus,.customeyes-files.focus-highlight .single-item:hover{background-color:#36393e}.customeyes-files .directory .size{color:transparent}';
+(function($){
+
+// Add stylesheet to head
+$.ajax({
+    url: "//raw.githubusercontent.com/oduska/customeyes/master/customeyes.css",
+    success: function(data) {
+        $("<style></style>").appendTo("head").html(data);
+    }
+});
 
 // Directory/file type icons
 var icons = '<svg style="display: none;" class="mimetype-icons" xmlns="http://www.w3.org/2000/svg">' +
@@ -25,13 +32,26 @@ var icons = '<svg style="display: none;" class="mimetype-icons" xmlns="http://ww
             '<symbol id="ebook" viewBox="0 0 48 48"><path d="M38 5l-24-.003906c-2.207031 0-4.816406 1.070312-4.984375 6.003906H9v28l.019531-.054687C9.199219 42.585938 11.566406 43 12.605469 43H37c2 0 2-2 2-2V6c0-.554687-.445312-1-1-1z" fill="#7e57c2"/><path d="M36 36H12.605469C11.273438 36 11 37.117188 11 38.5c0 1.382813.273438 2.503906 1.605469 2.503906L36 41z" fill="#ffe0b2"/><path d="M12.605469 36c-1.164063 0-1.519531.859375-1.589844 2H36v-2z" fill="#e0b990"/><path d="M14 10.996094h21v5H14z" fill="#ffecb3"/><path d="M38 36h-2v7h1c2 0 2-2 2-2v-5.996094C39 35.554688 38.554688 36 38 36z" fill="#311b92"/></symbol>' +
             '<symbol id="windows" viewBox="0 0 48 48"><g fill="#03a9f4"><path d="M20 25H6v12.074219l14 1.917969zM20 9.101563L6 11.066406V23h14zM22 8.820313V23h20V6.011719zM22 25v14.269531l20 2.742188V25z"/></g></symbol>' +
             '<symbol id="torrent" viewBox="0 0 48 48"><path d="M42 38c0 2.210938-1.789062 4-4 4H10c-2.210937 0-4-1.789062-4-4V10c0-2.210937 1.789063-4 4-4h28c2.210938 0 4 1.789063 4 4z" fill="#4caf50"/><path d="M15.5 19l8.5-8.5 8.5 8.5zM15.5 30l8.5 8.5 8.5-8.5z" fill="#dcedc8"/><path d="M21 17h6v15h-6z" fill="#dcedc8"/></symbol>' +
+            '<symbol id="bookmark"><path d="M24 13l2.898438 5.898438.902343 1.902343 2.097657.300782 6.5.898437-4.699219 4.601563-1.5 1.5.402344 2.097656 1.097656 6.5-5.800781-3.097656-1.898438-1-1.898437 1-5.800782 3.097656 1.097657-6.5.402343-2.097656-1.5-1.5L11.601563 22l6.5-.898437 2.097656-.300782.902344-1.902343L24 13m0-9l-6.5 13.199219L3 19.300781 13.5 29.5 11 44l13-6.800781L37 44l-2.5-14.5L45 19.300781l-14.5-2.101562z" fill="#ffca28"/></symbol>' +
+            '<symbol id="bookmark-added"><path d="M24 4.050781L30.488281 17.1875 45 19.289063 34.5 29.511719l2.476563 14.4375L24 37.136719l-12.976562 6.8125L13.5 29.511719 3 19.289063 17.511719 17.1875z" fill="#ffca28"/></symbol>' +
             '</svg>';
 
 // Build toolbar object
 var toolbar = '<div class="customeyes-toolbar">' +
-              '<div class="option-group"><input type="checkbox" id="enable-icons"> <label for="enable-icons">Icons</label></div>' +
-              '<div class="option-group"><input type="checkbox" id="colored-icons"> <label for="colored-icons">Colored Icons</label></div>' +
+              '<div class="settings-group">' +
+              '<h3>Icons</h3>' +
+              '<div class="option-group"><input type="checkbox" id="enable-icons"> <label for="enable-icons">Enable</label></div>' +
+              '<div class="option-group"><input type="checkbox" id="colored-icons"> <label for="colored-icons">Colored</label></div>' +
+              '</div>' +
+              '<div class="settings-group">' +
+              '<h3>Bookmarks</h3>' +
+              '<div class="option-group"><input type="checkbox" id="enable-bookmarks"> <label for="enable-bookmarks">Bookmarks</label></div>' +
+              '<div class="option-group"><input type="checkbox" id="show-bookmarks-list"> <label for="show-bookmarks-list">Bookmarks List</label></div>' +
+              '</div>' +
+              '<div class="settings-group">' +
+              '<h3>Misc.</h3>' +
               '<div class="option-group"><input type="checkbox" id="focus-highlight"> <label for="focus-highlight">Hover/Focus Highlight</label></div>' +
+              '</div>' +
               '</div>';
 
 // File formats
@@ -42,7 +62,7 @@ var videos = ['webm', 'mkv', 'flv', 'vob', 'ogv', 'gifv', 'mng', 'avi', 'mov', '
 discImages = ['iso', 'bin', 'cue', 'ciso', 'nrg', 'mdf', 'mds', 'img'],
     ebooks = ['cbr', 'cbz', 'cb7', 'cbt', 'cba', 'djvu', 'epub', 'fb2', 'ibook', 'azw', 'lit', 'prc', 'mobi', 'pdb'];
 
-$('pre').before('<style type="text/css">' + css + '</style>');
+//$('pre').before('<style type="text/css">' + css + '</style>');
 
 // Add class and prepend toolbar to file list
 $('pre').addClass('customeyes-files').before(toolbar).before(icons);
@@ -83,6 +103,28 @@ $('body').on('click', '#focus-highlight', function() {
     }
 });
 
+$('body').on('click', '#enable-bookmarks', function() {
+    $('html').toggleClass('bookmarks-enabled');
+
+    if ( $('html').hasClass('bookmarks-enabled') ) {
+        localStorage.setItem('bookmarks-enabled', true);
+    }
+    else {
+        localStorage.setItem('bookmarks-enabled', false);
+    }
+});
+
+$('body').on('click', '#show-bookmarks-list', function() {
+    $('html').toggleClass('show-bookmarks-list');
+
+    if ( $('html').hasClass('show-bookmarks-list') ) {
+        localStorage.setItem('show-bookmarks-list', true);
+    }
+    else {
+        localStorage.setItem('show-bookmarks-list', false);
+    }
+});
+
 $('body').on('focus', '.customeyes-files .name', function() {
     $(this).parent().addClass('focus');
 });
@@ -113,7 +155,6 @@ $customeyesFiles.contents().filter(function() {
 $('.name').each(function() {
     $(this).nextUntil('.name').addBack().wrapAll('<div class="single-item"/>');
 });
-
 
 // Show full file name
 $('pre a:not(:first)').each(function(){
@@ -147,7 +188,7 @@ $('.file .name').each(function() {
     else {
         $(this).parent().addClass('mimetype-' + extension);
 
-        if ( extension == 'txt' ) {
+        if ( extension == 'txt' || extension == 'srt' || extension == 'sub' ) {
             $(this).prepend('<svg class="customeyes-icon" viewBox="0 0 48 48"><use class="text" xlink:href="#text" /></svg>');
         }
         else if ( extension == 'pdf' ) {
@@ -183,6 +224,78 @@ $('.file .name').each(function() {
     }
 });
 
+
+// Bookmarks
+// Add bookmark icons to files/directories
+var bookmarkUrl = '',
+    bookmarkName = '',
+    bookmarkDate = '',
+    bookmarkSize = '';
+
+$('.single-item').each(function() {
+    bookmarkName = decodeURIComponent( $(this).find('.name').attr('href') );
+    bookmarkUrl = $(this).find('.name').prop('href');
+    bookmarkDate = $(this).find('.date-time').text();
+    bookmarkSize = $(this).find('.size').text();
+    var bookmarkIcon = '<button class="bookmark" data-bookmark-name="' + bookmarkName + '" data-bookmark-url="' + bookmarkUrl + '" data-bookmark-date="' + bookmarkDate + '" data-bookmark-size="' + bookmarkSize + '">' +
+                       '<span>Bookmark</span>' +
+                       '</button>';
+
+    $(this).prepend( bookmarkIcon );
+});
+
+// Create bookmarks list
+var bookmarksList = '<div class="bookmarks-list">' +
+                    '<ul></ul>' +
+                    '</div>';
+
+$('.customeyes-toolbar').after(bookmarksList);
+
+// Create bookmarks object
+var bookmarks = [];
+
+$('body').on('click', '.bookmark', function() {
+    updateBookmarks($(this));
+});
+
+function updateBookmarks($this) {
+    var $bookmarksList = $('.bookmarks-list');
+    var bookmark = {};
+
+    bookmark.bookmark = $this.data('bookmark-url');
+    bookmark.name = $this.data('bookmark-name');
+    bookmark.date = $this.data('bookmark-date');
+    bookmark.size = $this.data('bookmark-size');
+
+    var bookmarkHTML = '<li class="bookmark-item" data-bookmark-url="' + bookmark.bookmark + '">' +
+                       '<p class="name">' + bookmark.name + '</p>' +
+                       '<p class="url"><a href="' + bookmark.bookmark + '">' + bookmark.bookmark + '</a></p>' +
+                       '</li>';
+
+    $bookmarksList.find('ul').append(bookmarkHTML);
+
+    if ( $this.hasClass('added') ) {
+        $this.removeClass('added');
+
+        $bookmarksList.find('[data-bookmark-url="' + $this.data('bookmark-url') + '"]').remove();
+
+        var remove = $this.data('bookmark-url');
+
+        bookmarks = bookmarks.filter(function(val) {
+            return (remove.indexOf(val.bookmark) == -1 ? true : false)
+        });
+    }
+    else {
+        $this.addClass('added');
+
+        bookmarks.push(bookmark);
+    }
+
+    localStorage.setItem('bookmarks', JSON.stringify(bookmarks));
+}
+
+
+
 // Load settings on page load
 
 if ( localStorage.getItem('icons-enabled') == 'true' ) {
@@ -199,3 +312,30 @@ if ( localStorage.getItem('focus-highlight') == 'true' ) {
     $('#focus-highlight').prop('checked', true);
     $customeyesFiles.addClass('focus-highlight');
 }
+
+if ( localStorage.getItem('bookmarks-enabled') == 'true' ) {
+    $('#enable-bookmarks').prop('checked', true);
+    $('html').addClass('bookmarks-enabled');
+}
+
+if ( localStorage.getItem('show-bookmarks-list') == 'true' ) {
+    $('#show-bookmarks-list').prop('checked', true);
+    $('html').addClass('show-bookmarks-list');
+}
+
+if ( localStorage.getItem('bookmarks') ) {
+    bookmarks = $.parseJSON(localStorage.getItem('bookmarks'));
+
+    $(bookmarks).each(function(i,val){
+        $('.single-item .bookmark[data-bookmark-url="' + val.bookmark + '"]').addClass('added');
+
+        var bookmarkHTML = '<li class="bookmark-item" data-bookmark-url="' + val.bookmark + '">' +
+                           '<p class="name">' + val.name + '</p>' +
+                           '<p class="url"><a href="' + val.bookmark + '">' + val.bookmark + '</a></p>' +
+                           '</li>';
+
+        $('.bookmarks-list').find('ul').append(bookmarkHTML);
+    });
+}
+
+})(jQuery);
